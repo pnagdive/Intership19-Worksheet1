@@ -1,0 +1,1143 @@
++*In[4]:*+
+[source, ipython3]
+----
+import requests
+import pandas as pd
+import json
+from bs4 import BeautifulSoup
+import time
+import datetime
+----
+
+
++*In[5]:*+
+[source, ipython3]
+----
+HEADERS = ({
+    'User-Agent':'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/44.0.2403.157 Safari/537.36',
+    'Accept-Language': 'en-US, en;q=0.5'
+})
+----
+
+
++*In[6]:*+
+[source, ipython3]
+----
+def get_body(url):
+    page = requests.get(url,headers=HEADERS)
+    return BeautifulSoup(page.content, 'html.parser')
+----
+
+== 1. Write a python program to display all the header tags from `en.wikipedia.org/wiki/Main_Page'.
+
+There is no ``Header Tags'' on the this web page I’m considering
+``Header Tags'' Means all the ``Heading Tag'' (H1 to H6)
+
+
++*In[7]:*+
+[source, ipython3]
+----
+url = 'https://en.wikipedia.org/wiki/Main_Page'
+body = get_body(url)
+----
+
+
++*In[8]:*+
+[source, ipython3]
+----
+h_list = []
+for i in range(1,7):
+    h_list.append([one.text for one in body.findAll(f'h{i}') ])
+all_headers = pd.DataFrame(h_list).T
+all_headers.columns = [ f'h{i}' for i in range(1,7)]
+----
+
+
++*In[9]:*+
+[source, ipython3]
+----
+all_headers
+----
+
+
++*Out[9]:*+
+----
+[cols=",,,,,,",options="header",]
+|===
+| |h1 |h2 |h3 |h4 |h5 |h6
+|0 |Main Page |From today's featured article |Personal tools\n |None
+|None |None
+
+|1 |None |Did you know ... |Namespaces\n |None |None |None
+
+|2 |None |In the news |Variants\n |None |None |None
+
+|3 |None |On this day |Views\n |None |None |None
+
+|4 |None |Today's featured picture |More\n |None |None |None
+
+|5 |None |Other areas of Wikipedia |\nSearch\n |None |None |None
+
+|6 |None |Wikipedia's sister projects |Navigation\n |None |None |None
+
+|7 |None |Wikipedia languages |Contribute\n |None |None |None
+
+|8 |None |Navigation menu |Tools\n |None |None |None
+
+|9 |None |None |Print/export\n |None |None |None
+
+|10 |None |None |In other projects\n |None |None |None
+
+|11 |None |None |Languages\n |None |None |None
+|===
+----
+
+== 2. Write a python program to display IMDB’s Top rated 100 movies’ data (i.e. Name, IMDB rating, Year of release)
+
+
++*In[10]:*+
+[source, ipython3]
+----
+url = 'https://www.imdb.com/chart/top?ref_=nv_mv_250'
+----
+
+
++*In[11]:*+
+[source, ipython3]
+----
+all_divs = get_body(url).find_all('tr')
+----
+
+
++*In[12]:*+
+[source, ipython3]
+----
+final_list = []
+for i,one_div in enumerate(all_divs):
+    if i == 0 :
+        continue
+    if i == 101:
+        break
+        
+    title_column = one_div.find('td',{'class','titleColumn'})
+    year = title_column.find('span').text.replace('(','').replace(')','')
+    name = title_column.find('a').text
+    rating = one_div.find('td',{'class','ratingColumn'}).find('strong').text
+    final_list.append({'year':year,'name':name,'rating':rating})
+    
+final_df = pd.DataFrame(final_list)
+final_df
+----
+
+
++*Out[12]:*+
+----
+[cols=",,,",options="header",]
+|===
+| |year |name |rating
+|0 |1994 |The Shawshank Redemption |9.2
+|1 |1972 |The Godfather |9.1
+|2 |1974 |The Godfather: Part II |9.0
+|3 |2008 |The Dark Knight |9.0
+|4 |1957 |12 Angry Men |8.9
+|... |... |... |...
+|95 |1955 |Pather Panchali |8.3
+|96 |2000 |Requiem for a Dream |8.3
+|97 |1952 |Singin' in the Rain |8.3
+|98 |1959 |North by Northwest |8.3
+|99 |2004 |Eternal Sunshine of the Spotless Mind |8.3
+|===
+
+100 rows × 3 columns
+----
+
+== 3. Write a python program to display IMDB’s Top rated 100 Indian movies’ data (i.e. Name, IMDB rating, Year of release)
+
+
++*In[13]:*+
+[source, ipython3]
+----
+url = 'https://www.imdb.com/india/top-rated-indian-movies/'
+----
+
+
++*In[14]:*+
+[source, ipython3]
+----
+all_divs = get_body(url).find_all('tr')
+final_list = []
+for i,one_div in enumerate(all_divs):
+    if i == 0 :
+        continue
+    if i == 101:
+        break
+        
+    title_column = one_div.find('td',{'class','titleColumn'})
+    year = title_column.find('span').text.replace('(','').replace(')','')
+    name = title_column.find('a').text
+    rating = one_div.find('td',{'class','ratingColumn'}).find('strong').text
+    final_list.append({'year':year,'name':name,'rating':rating})
+    
+final_df = pd.DataFrame(final_list)
+final_df
+----
+
+
++*Out[14]:*+
+----
+[cols=",,,",options="header",]
+|===
+| |year |name |rating
+|0 |1987 |Nayakan |8.5
+|1 |2003 |Anbe Sivam |8.5
+|2 |2018 |Pariyerum Perumal |8.5
+|3 |2018 |C/o Kancharapalem |8.5
+|4 |1979 |Hanky Panky |8.5
+|... |... |... |...
+|95 |2012 |OMG: Oh My God! |8.1
+|96 |2006 |Rang De Basanti |8.1
+|97 |1992 |Roja |8.1
+|98 |2019 |Uri: The Surgical Strike |8.1
+|99 |2001 |Lagaan: Once Upon a Time in India |8.1
+|===
+
+100 rows × 3 columns
+----
+
+== 4. Write a python program to scrap book name, author name, genre and book review of any 5 books from `www.bookpage.com'
+
+
++*In[15]:*+
+[source, ipython3]
+----
+url = 'https://bookpage.com/reviews'
+----
+
+
++*In[16]:*+
+[source, ipython3]
+----
+all_boxs = get_body(url).find_all('div',{'class','article-row'})
+----
+
+
++*In[17]:*+
+[source, ipython3]
+----
+all_books = []
+for i,one_box in enumerate(all_boxs):
+    if i == 5:
+        break
+        
+    book_name = one_box.find('h4').find('a').text
+    author_name = one_box.find('p',{'class','sans'}).text
+    genre = one_box.find('p',{'class','hidden-phone'}).text.replace('\n','')
+    book_review = one_box.find('p',{'class','excerpt'}).text
+    all_books.append({
+        'book_name': book_name,'author_name': author_name,'genre': genre,'book_review': book_review
+    })
+    
+book_df = pd.DataFrame(all_books)
+book_df
+----
+
+
++*Out[17]:*+
+----
+[cols=",,,,",options="header",]
+|===
+| |book_name |author_name |genre |book_review
+|0 |Summer Light, and Then Comes the Night |\nJón Kalman Stefánsson,
+Philip Roughton\n |Fiction / Literary Fiction |\nThe sixth novel from
+award-winning Icelandic...
+
+|1 |★ Cuba |\nAda Ferrer\n |Nonfiction / History |\nAda Ferrer keeps her
+readers’ attention with...
+
+|2 |The Magician |\nColm Tóibín\n |Fiction / Literary Fiction |\nColm
+Tóibín paints an elegant fictionalized ...
+
+|3 |Willodeen |\nKatherine Applegate\n |Children's / Middle Grade
+|\nWillodeen is an endearing fable that illumin...
+
+|4 |Bear Is a Bear |\nJonathan Stutzman, Dan Santat\n |Children's
+Picture Book / Children's |\nJonathan Stutzman and Dan Santat’s Bear Is
+a...
+|===
+----
+
+== 5. Write a python program to scrape cricket rankings from `www.icc-cricket.com'. You have to scrape:
+
+== i) Top 10 ODI teams in men’s cricket along with the records for matches, points and rating.
+
+
++*In[18]:*+
+[source, ipython3]
+----
+url = 'https://www.icc-cricket.com/rankings/mens/team-rankings/odi'
+----
+
+
++*In[19]:*+
+[source, ipython3]
+----
+all_boxs = get_body(url).find('table').find('tbody').find_all('tr')
+----
+
+
++*In[20]:*+
+[source, ipython3]
+----
+# Looping data to get info
+all_data = []
+for i, one_box in enumerate(all_boxs):
+    
+    # top 10 teams
+    if i == 10 :
+        break 
+        
+    team = one_box.find('span',{'class','u-hide-phablet'}).text
+    tds = one_box.find_all('td')
+    match = tds[2].text
+    point = tds[3].text
+    rating = tds[4].text.strip()
+    all_data.append({'team': team, 'match': match, 'point': point, 'rating': rating})
+team_df = pd.DataFrame(all_data)
+team_df
+----
+
+
++*Out[20]:*+
+----
+[cols=",,,,",options="header",]
+|===
+| |team |match |point |rating
+|0 |New Zealand |17 |2,054 |121
+|1 |England |32 |3,793 |119
+|2 |Australia |28 |3,244 |116
+|3 |India |32 |3,624 |113
+|4 |South Africa |24 |2,428 |101
+|5 |Pakistan |27 |2,524 |93
+|6 |Bangladesh |29 |2,639 |91
+|7 |West Indies |30 |2,523 |84
+|8 |Sri Lanka |31 |2,506 |81
+|9 |Afghanistan |17 |1,054 |62
+|===
+----
+
+== ii) Top 10 ODI Batsmen in men along with the records of their team and rating.
+
+
++*In[21]:*+
+[source, ipython3]
+----
+url = 'https://www.icc-cricket.com/rankings/mens/player-rankings/odi/batting'
+----
+
+
++*In[22]:*+
+[source, ipython3]
+----
+all_boxs = get_body(url).find('table').find_all('tr')
+----
+
+
++*In[23]:*+
+[source, ipython3]
+----
+# Looping data to get info
+all_data = []
+for i, one_box in enumerate(all_boxs):
+    
+    # skiping heading
+    if i == 0:
+        continue
+    
+    
+    # top 10 teams
+    if i == 11:
+        break 
+    
+    tds = one_box.find_all('td')
+    
+    player = tds[1].text.replace('\n','')
+    country = tds[2].text.replace('\n','')
+    point = tds[3].text.replace('\n','')
+    all_data.append({ 'player': player, 'point': point, 'country': country})
+    
+player_df = pd.DataFrame(all_data)
+player_df
+----
+
+
++*Out[23]:*+
+----
+[cols=",,,",options="header",]
+|===
+| |player |point |country
+|0 |Babar Azam |873 |PAK
+|1 |Virat Kohli |844 |IND
+|2 |Rohit Sharma |813 |IND
+|3 |Ross Taylor |801 |NZ
+|4 |Aaron Finch |779 |AUS
+|5 |Jonny Bairstow |775 |ENG
+|6 |David Warner |762 |AUS
+|7 |Quinton de Kock |758 |SA
+|8 |Shai Hope |758 |WI
+|9 |Kane Williamson |754 |NZ
+|===
+----
+
+== iii) Top 10 ODI bowlers along with the records of their team and rating.
+
+
++*In[24]:*+
+[source, ipython3]
+----
+url = 'https://www.icc-cricket.com/rankings/mens/player-rankings/odi/bowling'
+----
+
+
++*In[25]:*+
+[source, ipython3]
+----
+all_boxs = get_body(url).find('table').find_all('tr')
+----
+
+
++*In[26]:*+
+[source, ipython3]
+----
+# Looping data to get info
+all_data = []
+for i, one_box in enumerate(all_boxs):
+    
+    # skiping heading
+    if i == 0:
+        continue
+    
+    
+    # top 10 teams
+    if i == 11:
+        break 
+    
+    tds = one_box.find_all('td')
+    
+    player = tds[1].text.replace('\n','')
+    country = tds[2].text.replace('\n','')
+    point = tds[3].text.replace('\n','')
+    all_data.append({ 'player': player, 'point': point, 'country': country})
+    
+player_df = pd.DataFrame(all_data)
+player_df
+----
+
+
++*Out[26]:*+
+----
+[cols=",,,",options="header",]
+|===
+| |player |point |country
+|0 |Trent Boult |737 |NZ
+|1 |Josh Hazlewood |709 |AUS
+|2 |Mujeeb Ur Rahman |708 |AFG
+|3 |Chris Woakes |700 |ENG
+|4 |Mehedi Hasan |692 |BAN
+|5 |Matt Henry |691 |NZ
+|6 |Jasprit Bumrah |679 |IND
+|7 |Mitchell Starc |652 |AUS
+|8 |Shakib Al Hasan |650 |BAN
+|9 |Kagiso Rabada |648 |SA
+|===
+----
+
+== 6. Write a python program to scrape cricket rankings from `www.icc-cricket.com'. You have to scrape:
+
+== i) Top 10 ODI teams in women’s cricket along with the records for matches, points and rating.
+
+
++*In[27]:*+
+[source, ipython3]
+----
+url = 'https://www.icc-cricket.com/rankings/womens/team-rankings/odi'
+----
+
+
++*In[28]:*+
+[source, ipython3]
+----
+all_boxs = get_body(url).find('table').find('tbody').find_all('tr')
+----
+
+
++*In[29]:*+
+[source, ipython3]
+----
+# Looping data to get info
+all_data = []
+for i, one_box in enumerate(all_boxs):
+    
+    # top 10 teams
+    if i == 10 :
+        break 
+        
+    team = one_box.find('span',{'class','u-hide-phablet'}).text
+    tds = one_box.find_all('td')
+    match = tds[2].text
+    point = tds[3].text
+    rating = tds[4].text.strip()
+    all_data.append({'team': team, 'match': match, 'point': point, 'rating': rating})
+team_df = pd.DataFrame(all_data)
+team_df
+----
+
+
++*Out[29]:*+
+----
+[cols=",,,,",options="header",]
+|===
+| |team |match |point |rating
+|0 |Australia |18 |2,955 |164
+|1 |England |20 |2,370 |119
+|2 |South Africa |24 |2,828 |118
+|3 |India |23 |2,535 |110
+|4 |New Zealand |21 |1,947 |93
+|5 |West Indies |17 |1,427 |84
+|6 |Pakistan |20 |1,496 |75
+|7 |Bangladesh |5 |306 |61
+|8 |Sri Lanka |11 |519 |47
+|9 |Ireland |2 |25 |13
+|===
+----
+
+== ii) Top 10 women’s ODI players along with the records of their team and rating.
+
+
++*In[31]:*+
+[source, ipython3]
+----
+url = 'https://www.icc-cricket.com/rankings/womens/player-rankings/odi/batting'
+----
+
+
++*In[32]:*+
+[source, ipython3]
+----
+all_boxs = get_body(url).find('table').find_all('tr')
+----
+
+
++*In[33]:*+
+[source, ipython3]
+----
+# Looping data to get info
+all_data = []
+for i, one_box in enumerate(all_boxs):
+    
+    # skiping heading
+    if i == 0:
+        continue
+    
+    
+    # top 10 teams
+    if i == 11:
+        break 
+    
+    tds = one_box.find_all('td')
+    
+    player = tds[1].text.replace('\n','')
+    country = tds[2].text.replace('\n','')
+    point = tds[3].text.replace('\n','')
+    all_data.append({ 'player': player, 'point': point, 'country': country})
+    
+player_df = pd.DataFrame(all_data)
+player_df
+----
+
+
++*Out[33]:*+
+----
+[cols=",,,",options="header",]
+|===
+| |player |point |country
+|0 |Mithali Raj |762 |IND
+|1 |Lizelle Lee |758 |SA
+|2 |Alyssa Healy |756 |AUS
+|3 |Tammy Beaumont |754 |ENG
+|4 |Stafanie Taylor |736 |WI
+|5 |Meg Lanning |723 |AUS
+|6 |Amy Satterthwaite |715 |NZ
+|7 |Natalie Sciver |706 |ENG
+|8 |Smriti Mandhana |701 |IND
+|9 |Laura Wolvaardt |683 |SA
+|===
+----
+
+== iii) Top 10 women’s ODI all-rounder along with the records of their team and rating.
+
+
++*In[35]:*+
+[source, ipython3]
+----
+url = 'https://www.icc-cricket.com/rankings/womens/player-rankings/odi/all-rounder'
+----
+
+
++*In[36]:*+
+[source, ipython3]
+----
+all_boxs = get_body(url).find('table').find_all('tr')
+----
+
+
++*In[37]:*+
+[source, ipython3]
+----
+# Looping data to get info
+all_data = []
+for i, one_box in enumerate(all_boxs):
+    
+    # skiping heading
+    if i == 0:
+        continue
+    
+    
+    # top 10 teams
+    if i == 11:
+        break 
+    
+    tds = one_box.find_all('td')
+    
+    player = tds[1].text.replace('\n','')
+    country = tds[2].text.replace('\n','')
+    point = tds[3].text.replace('\n','')
+    all_data.append({ 'player': player, 'point': point, 'country': country})
+    
+player_df = pd.DataFrame(all_data)
+player_df
+----
+
+
++*Out[37]:*+
+----
+[cols=",,,",options="header",]
+|===
+| |player |point |country
+|0 |Marizanne Kapp |418 |SA
+|1 |Ellyse Perry |418 |AUS
+|2 |Stafanie Taylor |394 |WI
+|3 |Natalie Sciver |365 |ENG
+|4 |Deepti Sharma |331 |IND
+|5 |Jess Jonassen |307 |AUS
+|6 |Ashleigh Gardner |252 |AUS
+|7 |Dane van Niekerk |243 |SA
+|8 |Sophie Devine |242 |NZ
+|9 |Katherine Brunt |239 |ENG
+|===
+----
+
+== 7. Write a python program to scrape details of all the mobile phones under Rs. 20,000 listed on Amazon.in. The scraped data should include Product Name, Price, Image URL and Average Rating.
+
+
++*In[53]:*+
+[source, ipython3]
+----
+url = 'https://www.amazon.in/s?k=all+the+mobile+phones+under+Rs.+20%2C000&ref=nb_sb_noss'
+
+is_next = True
+final_product_list = []
+i = 1
+
+while is_next:
+    
+
+    all_mobile_data = get_body(url)
+
+    all_boxs = all_mobile_data.find_all('div',{'class':['s-result-item','s-asin']})
+
+    
+    # Find all the data of the currecnt page
+    for one_box in all_boxs:
+        try:
+            inner_box = one_box.find('div',{'class':['a-section','a-spacing-medium']})
+
+            product_name = inner_box.find('h2').find('span').text
+
+            price = inner_box.find_all('div',{'class','sg-col-inner'})[1] \
+                            .find('div',{'class','sg-row'}) \
+                            .find('div',{'class','a-spacing-top-small'}) \
+                            .find_all('span')[1].text
+
+            if '₹' not in price:
+                price = inner_box.find_all('div',{'class','sg-col-inner'})[1] \
+                            .find('div',{'class','sg-row'}) \
+                            .find('div',{'class','a-spacing-top-small'}) \
+                            .find('span',{'class','a-offscreen'}).text
+
+            image = inner_box.find('img')['src']
+            average_rating = inner_box.find('i').find('span').text.split(' out of 5 stars')[0]
+
+            final_product_list.append({
+                'product_name': product_name, 
+                'price': price, 
+                'image': image, 
+                'average_rating': average_rating
+            })
+        except Exception as e:
+            continue
+            
+           
+    # move to the next page
+    
+    i += 1
+    try:
+        a_pagination = all_mobile_data.find('ul',{'class','a-pagination'})
+        s_pagination_item = all_mobile_data.find('a',{'class':['s-pagination-item','s-pagination-button']})
+        try:
+            if a_pagination != None:
+                sub_url = all_mobile_data.find('ul',{'class','a-pagination'}).find("a", string=str(i))['href']
+            elif s_pagination_item != None:
+                find_element = all_mobile_data.find('a',{'class':['s-pagination-item','s-pagination-button']}).text
+                if 'Previous' in find_element:
+                    find_element = all_mobile_data.find_all('a',{'class':['s-pagination-item','s-pagination-button']})
+                sub_url = all_mobile_data.find('a',{'class':['s-pagination-item','s-pagination-button']}).find_all("a", string=str(i))['href']
+
+        except Exception as e1:
+            sub_urls = all_mobile_data.find('a',{'class':['s-pagination-item','s-pagination-button']}).find_all("a", string=str(i))
+            
+        url = 'https://www.amazon.in' + sub_url
+        
+        is_next = True
+    except Exception as e:
+        is_next = False
+        
+pd.DataFrame(final_product_list)
+----
+
+
++*Out[53]:*+
+----
+[cols=",,,,",options="header",]
+|===
+| |product_name |price |image |average_rating
+|0 |Panasonic Eluga i7 (2GB RAM, 16GB Storage, Fin... |₹5,798
+|https://m.media-amazon.com/images/I/41QsvcpKaZ... |3.0
+
+|1 |realme C11 (2021) (Cool Grey, 2GB RAM, 32GB St... |₹7,299
+|https://m.media-amazon.com/images/I/618UBhFmaQ... |4.1
+
+|2 |Redmi 9A (Nature Green, 2GB RAM, 32GB Storage)... |₹6,999
+|https://m.media-amazon.com/images/I/71sxlhYhKW... |4.2
+
+|3 |realme C11 (2021) (Cool Blue, 2GB RAM, 32GB St... |₹7,299
+|https://m.media-amazon.com/images/I/71FYSKYFup... |4.1
+
+|4 |OnePlus Nord CE 5G (Charcoal Ink, 8GB RAM, 128... |₹24,999
+|https://m.media-amazon.com/images/I/71LRBr1aLN... |4.1
+
+|5 |Oppo A31 (Fantasy White, 6GB RAM, 128GB Storag... |₹12,490
+|https://m.media-amazon.com/images/I/61CnyJ-IbM... |4.2
+
+|6 |Oppo A31 (Mystery Black, 6GB RAM, 128GB Storag... |₹12,490
+|https://m.media-amazon.com/images/I/71KCwNV6Mu... |4.2
+
+|7 |Redmi 9 (Sky Blue, 4GB RAM, 64GB Storage) | 2.... |₹9,499
+|https://m.media-amazon.com/images/I/71A9Vo1Bat... |4.2
+
+|8 |Redmi 9 (Carbon Black, 4GB RAM, 64GB Storage) ... |₹9,499
+|https://m.media-amazon.com/images/I/716nHhG9SW... |4.2
+
+|9 |Redmi 9 Prime (Sunrise Flare, 4GB RAM, 64GB St... |₹10,499
+|https://m.media-amazon.com/images/I/71U2SiHgbi... |4.3
+
+|10 |OPPO A31 (Fantasy White, 4GB RAM, 64GB Storage... |₹10,990
+|https://m.media-amazon.com/images/I/61CnyJ-IbM... |4.2
+
+|11 |realme narzo 30 (Racing Blue, 6GB RAM, 128GB S... |₹15,499
+|https://m.media-amazon.com/images/I/719tm7l723... |4.0
+
+|12 |Redmi Note 10 (Aqua Green, 4GB RAM, 64GB Stora... |₹13,999
+|https://m.media-amazon.com/images/I/810GQ7CWdD... |4.2
+
+|13 |Redmi 9A (Midnight Black, 2GB RAM, 32GB Storag... |₹6,999
+|https://m.media-amazon.com/images/I/71sxlhYhKW... |4.3
+
+|14 |Samsung Galaxy M32 5G (Sky Blue, 6GB RAM, 128G... |₹20,999
+|https://m.media-amazon.com/images/I/719uP6EXsd... |2.7
+
+|15 |Redmi 9A (Sea Blue 2GB RAM 32GB Storage) | 2GH... |₹6,999
+|https://m.media-amazon.com/images/I/71sxlhYhKW... |4.2
+|===
+----
+
+== 8. Write a python program to extract information about the local weather from the National Weather Service website of USA, https://www.weather.gov/ for the city, San Francisco. You need to extract data about 7 day extended forecast display for the city. The data should include period, short description, temperature and description
+
+
++*In[40]:*+
+[source, ipython3]
+----
+url = 'https://forecast.weather.gov/MapClick.php?lat=37.777120000000025&lon=-122.41963999999996#.YRzDFHUzZNg'
+----
+
+
++*In[41]:*+
+[source, ipython3]
+----
+forecast_boxs = get_body(url).find_all('div',{'class':'row-forecast'})
+----
+
+
++*In[42]:*+
+[source, ipython3]
+----
+now = datetime.datetime.now()
+----
+
+
++*In[43]:*+
+[source, ipython3]
+----
+all_day_name = []
+for i in range(0,6):
+    all_day_name.append((now + datetime.timedelta(days=i)).strftime("%A"))
+----
+
+
++*In[44]:*+
+[source, ipython3]
+----
+final_data = []
+for i, one_box in enumerate(forecast_boxs):
+    
+    forecast_label = one_box.find('div',{'class':'forecast-label'}).text 
+    forecast_text = one_box.find('div',{'class':'forecast-text'}).text 
+    
+    if i == 0:
+        period = 'Today'
+    elif forecast_label in all_day_name:
+        period = forecast_label
+    else:
+        continue
+        
+    sort_desc = forecast_text.split('.')[0]
+    temprature = forecast_text.split(', with a ')[1].split('.')[0][-2:]    
+    description = forecast_text
+    final_data.append({'period': period,'sort_desc': sort_desc,'temprature': temprature,'description': description})
+        
+df = pd.DataFrame(final_data) 
+df
+----
+
+
++*Out[44]:*+
+----
+[cols=",,,,",options="header",]
+|===
+| |period |sort_desc |temprature |description
+|0 |Today |Sunny, with a high near 74 |74 |Sunny, with a high near 74.
+West wind 5 to 10 ...
+
+|1 |Tuesday |Mostly sunny, with a high near 72 |72 |Mostly sunny, with a
+high near 72. Breezy, wit...
+
+|2 |Wednesday |Sunny, with a high near 72 |72 |Sunny, with a high near
+72.
+
+|3 |Thursday |Mostly sunny, with a high near 70 |70 |Mostly sunny, with
+a high near 70.
+
+|4 |Friday |Partly sunny, with a high near 67 |67 |Partly sunny, with a
+high near 67.
+|===
+----
+
+== 9. Write a python program to scrape fresher job listings from `https://internshala.com/'. It should include job title, company name, CTC, and apply date.
+
+
++*In[45]:*+
+[source, ipython3]
+----
+url = 'https://internshala.com/fresher-jobs'
+pagination_base_url = 'https://internshala.com/fresher-jobs/page-'
+----
+
+
++*In[46]:*+
+[source, ipython3]
+----
+is_next = True
+final_list = []
+i = 1
+
+while is_next:
+    
+
+    all_body_data = get_body(url)
+
+    all_boxs = all_body_data.find_all('div',{'class':['visibilityTrackerItem']})
+
+    
+    # Find all the data of the currecnt page
+    for one_box in all_boxs:
+        try:
+            inner_box = one_box.find('div',{'class':['internship_meta']})
+
+            
+            other_detail_item_row = inner_box.find('div',{'class':'internship_other_details_container'}) \
+                .find_all('div',{'class','other_detail_item_row'})
+            
+            
+            job_title = inner_box.find('div',{'class':'profile'}).find('a').text
+            copany_name = inner_box.find('div',{'class':'company_name'}).find('a').text.replace('\n','')
+            ctc = other_detail_item_row[0].find_all('div',{'class':'item_body'})[1].text.replace('\n','')
+            apply_date = other_detail_item_row[1].find('div',{'class':'item_body'}).text
+
+            final_list.append({
+                'job_title': job_title, 
+                'copany_name': copany_name, 
+                'ctc': ctc, 
+                'apply_date': apply_date
+            })
+        except Exception as e:
+            continue
+            
+   # move to the next page
+    
+    i += 1
+    try:
+        total_pages = all_body_data.find('span',{'id':'total_pages'}).text
+        if int(total_pages) != i-1:        
+            url = pagination_base_url + str(i)
+            print('fetching:',url)
+            is_next = True
+        else:
+            is_next = False
+            
+    except Exception as e:
+        print(e)
+        is_next = False
+        
+pd.DataFrame(final_list)
+----
+
+
++*Out[46]:*+
+----
+fetching: https://internshala.com/fresher-jobs/page-2
+fetching: https://internshala.com/fresher-jobs/page-3
+fetching: https://internshala.com/fresher-jobs/page-4
+fetching: https://internshala.com/fresher-jobs/page-5
+fetching: https://internshala.com/fresher-jobs/page-6
+
+[cols=",,,,",options="header",]
+|===
+| |job_title |copany_name |ctc |apply_date
+|0 |OMNI SPORT LEADER |Decathlon Sport India ... |3 - 4 LPA ... |18 Sep'
+21
+
+|1 |Executive/Senior Executive - Partnerships |Freecharge Payments Te...
+|3 - 4.2 LPA ... |11 Sep' 21
+
+|2 |Executive - Sales |Freecharge Payments Te... |3 - 3.5 LPA ... |11
+Sep' 21
+
+|3 |Business Success Manager |ConsultBae ... |3 - 6 LPA ... |5 Oct' 21
+
+|4 |Associate Graphic Designer |Yellow Umbrella Creati... |3 - 4 LPA ...
+|4 Oct' 21
+
+|... |... |... |... |...
+
+|228 |Business & Marketing Associate |Slforganic ... |3 - 5 LPA ... |8
+Sep' 21
+
+|229 |Flutter Developer |Binary Numbers ... |3 - 5 LPA ... |6 Sep' 21
+
+|230 |Anime Content Writer & Copyeditor |Epic Media Labs LLP ... |3 -
+4.2 LPA ... |6 Sep' 21
+
+|231 |Associate Software Developer |Pranjali Enterprises ... |5 - 10 LPA
+... |11 Sep' 21
+
+|232 |Billing & Accounts Manager |Touchstone Partners ... |4 - 7 LPA ...
+|2 Oct' 21
+|===
+
+233 rows × 4 columns
+----
+
+== 10. Write a python program to scrape house details from https://www.nobroker.in/ for any location. It should include house title, location, area, emi and price
+
+== Using Beautifulsoup
+
+
++*In[47]:*+
+[source, ipython3]
+----
+url = 'https://www.nobroker.in/property/sale/bangalore/Creditguru?searchParam=W3sibGF0IjoxMi45ODAwNzU3LCJsb24iOjc3LjUxMTQ0OTM5OTk5OTk5LCJwbGFjZUlkIjoiQ2hJSksyNDFDRFE4cmpzUnFibWt5M2V4T0V3IiwicGxhY2VOYW1lIjoiQ3JlZGl0Z3VydSIsInNob3dNYXAiOmZhbHNlfV0=&radius=2.0'
+----
+
+
++*In[48]:*+
+[source, ipython3]
+----
+get_boxes = get_body(url).find_all('div',{'class':'nb__2JHKO'})
+----
+
+
++*In[49]:*+
+[source, ipython3]
+----
+final_data = []
+for one_box in get_boxes:
+    
+    house_title = one_box.find('h2').text
+    location = one_box.find('div',{'class':'nb__2CMjv'}).text
+    
+    inner_box = one_box.find('div',{'class':'nb__17R6o'})
+    
+    area = inner_box.find('div',{'class':'nb__3oNyC'}).text
+    emi = inner_box.find('div',{'id':'roomType'}).text
+    price = inner_box.find('div',{'id':'minDeposit'}).find('span').text
+    
+    final_data.append({
+        'house_title': house_title,
+        'location': location,
+        'area': area, 
+        'emi': emi, 
+        'price': price
+    })
+
+df = pd.DataFrame(final_data)
+df
+----
+
+
++*Out[49]:*+
+----
+[cols=",,,,,",options="header",]
+|===
+| |house_title |location |area |emi |price
+|0 |4 BHK Flat For Sale In Naagarabhaavi |standalone building, 2nd Stage
+near BDA COMPLE... |3,998 sqft |₹1.6 Lacs/Month |₹2.8 Crores
+
+|1 |2 BHK Flat For Sale In Naagarabhaavi |Standalone Building, 3rd Block
+Near BDA COMPL... |1,800 sqft |₹64,192/Month |₹1.12 Crores
+
+|2 |2 BHK Flat For Sale In Vaibhava Apartment I... |BDA Layout, 2nd
+Stage, near B.D.A. Complex |800 sqft |₹30,949/Month |₹54 Lacs
+
+|3 |2 BHK Flat For Sale In Sree Sai Park View I... |Nagarbhavi 2nd Stage
+, Near BDA complex next t... |745 sqft |₹29,803/Month |₹52 Lacs
+
+|4 |4+ BHK Flat For Sale In Naagarabhaavi |standalone building, 2nd
+stage,Malagala Main R... |3,000 sqft |₹63,045/Month |₹1.1 Crores
+
+|5 |3 BHK Flat For Sale In Naagarabhaavi |Standalone building, Old Outer
+Ring Rd near KL... |1,800 sqft |₹52,729/Month |₹92 Lacs
+
+|6 |4 BHK In Independent House For Sale In Nagar... |Independent House,
+1st D Main 2nd stage, Near ... |1,800 sqft |₹68,777/Month |₹1.2 Crores
+
+|7 |2 BHK In Independent House For Sale In Nagar... |Independent House,
+80 Feet Rd, Stage 2, near ... |1,200 sqft |₹65,338/Month |₹1.14 Crores
+
+|8 |4+ BHK Flat For Sale In Nagarbhavi |Standalone Building, 80 Feet
+Road ,2 Block Nea... |3,600 sqft |₹1.15 Lacs/Month |₹2 Crores
+
+|9 |4+ BHK Flat For Sale In Nagarbhavi |Standalone Building,
+Annapoorneshwari Nagar,ne... |4,300 sqft |₹1.55 Lacs/Month |₹2.7 Crores
+|===
+----
+
+
++*In[50]:*+
+[source, ipython3]
+----
+base_api_url = 'https://www.nobroker.in/api/v1/multi/property/sale/filter?pageNo={}&searchParam=W3sibGF0IjoxMi45ODAwNzU3LCJsb24iOjc3LjUxMTQ0OTM5OTk5OTk5LCJwbGFjZUlkIjoiQ2hJSksyNDFDRFE4cmpzUnFibWt5M2V4T0V3IiwicGxhY2VOYW1lIjoiQ3JlZGl0Z3VydSJ9XQ==&radius=2.0&city=bangalore'
+----
+
+
++*In[51]:*+
+[source, ipython3]
+----
+next_page = True
+page_no = 1
+final_data = []
+while next_page:
+    one_page_contetn = requests.get(base_api_url.format(page_no)).content
+    one_page_json = json.loads(one_page_contetn)
+    
+    datas = one_page_json['data']
+    
+    if len(datas) == 0:
+        break
+    
+    for data in datas:
+
+        house_title = data['propertyTitle']
+        location = data['street'] + data['locality'] + data['city']
+        area = data['propertySize']
+        emi = data['defaultEmi']
+        price = data['price']
+    
+        final_data.append({
+            'house_title': house_title,
+            'location': location,
+            'area': area, 
+            'emi': emi, 
+            'price': price
+        })
+    page_no += 1
+df = pd.DataFrame(final_data)
+df
+----
+
+
++*Out[51]:*+
+----
+[cols=",,,,,",options="header",]
+|===
+| |house_title |location |area |emi |price
+|0 |4 BHK Flat For Sale In Naagarabhaavi |2nd Stage near BDA COMPLEX
+NAGARBHAVINaagarabh... |3998 |1.6 Lacs/Month |28000000
+
+|1 |2 BHK Flat For Sale In Naagarabhaavi |3rd Block Near BDA COMPLEX
+NAGARBHAVINaagarab... |1800 |64,192/Month |11200000
+
+|2 |2 BHK Flat For Sale In Vaibhava Apartment I... |BDA Layout, 2nd
+Stage, near B.D.A. ComplexNaga... |800 |30,949/Month |5400000
+
+|3 |2 BHK Flat For Sale In Sree Sai Park View I... |Nagarbhavi 2nd Stage
+, Near BDA complex next t... |745 |29,803/Month |5200000
+
+|4 |4+ BHK Flat For Sale In Naagarabhaavi |2nd stage,Malagala Main
+Rd,near State Bank of ... |3000 |63,045/Month |11000000
+
+|... |... |... |... |... |...
+
+|285 |1 BHK Flat For Sale In Kamakshipalya |Vrushabhavathi Nagar Near
+Sapthagiri Bakery An... |600 |37,254/Month |6500000
+
+|286 |1 BHK Flat For Sale In Kamakshipalya |Vrushabhavathi Nagar Near
+Sapthagiri Bakery An... |600 |37,254/Month |6500000
+
+|287 |4+ BHK Flat For Sale In Kamakshipalya |Patalamma St near to
+St.Lawrence English Scho... |600 |55,021/Month |9600000
+
+|288 |4 BHK In Independent House For Sale In Kamak... |Ranganathaoura,
+Near Ganesha TempleKamakshipal... |1650 |71,643/Month |12500000
+
+|289 |3 BHK Flat For Sale In Naagarabhaavi, |Vinayaka Layout near Aryan
+Presidency School N... |1800 |80,240/Month |14000000
+|===
+
+290 rows × 5 columns
+----
+
+
++*In[ ]:*+
+[source, ipython3]
+----
+
+----
